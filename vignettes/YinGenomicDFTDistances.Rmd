@@ -4,7 +4,7 @@ author: "Micah A. Thornton"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette 
 vignette: >
-  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteIndexEntry{YinGenomicDFTDistances}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
