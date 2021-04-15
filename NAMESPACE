@@ -3,3 +3,4 @@
 export(encodeGenome)
 export(encodeGenomes)
 export(getOptimal2DStrategy)
+export(getPowerSpectraSingle)

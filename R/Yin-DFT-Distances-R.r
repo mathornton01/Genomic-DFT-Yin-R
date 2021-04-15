@@ -123,11 +123,47 @@ encodeGenomes <- function(stringGenomes,dimension='2D') {
   }))
 }
 
+#' Get the Fourier Power Spectrum for a single encoded Genomic Signal 
+#' 
+#' This function produces the power spectrum of the Fourier transform for a 
+#' single genomic signal that has been encoded using either the 2D or 4D 
+#' representation, the function will produce an error if it is not supplied with
+#' a matrix of values that has a number of rows equal to 2 or 4. 
+#' @param encodedSignal is a genomic signal of interest, for which the average 
+#' power spectrum will be computed and returned to the user, you may encode 
+#' your genomic character strings by using the encodeGenomes or encodeGenome 
+#' function in this package. 
+#' @return A vector of values indicating the average power spectral density 
+#' (according to the Fourier Transform) for the encoded genomes four, or two 
+#' constituent signals. 
+#' @examples 
+#' MTHFR100 <- "TGGCCAGGTATAGTGGCTCATACCTGTAATCCCAGCACTCTGGGAGACCGAAGCAGTATCACCTGAGGTCAGGAGTTCGAGACCAGCCTGGCCAACATG"; 
+#' encMTHFR100 <- encodeGenome(MTHFR100); 
+#' psMTHFR100 <- PowerSpectraSingle(encMTHFR100); 
+#' plot(psMTHFR100, type='l',xlab='Frequency/Sequency',
+#'      ylab='Power Spectral Density', main="Power Spectrum of First 100 
+#'                                           nucleotides of MTHFR"); 
+#' @export
+getPowerSpectraSingle <- function(encodedSignal){
+  PS <- function(x) {return(abs(x)^2)}
+  if (!nrow(encodedSignal) %in% c(2,4)){
+    print("Please encode genomic string prior to attempting to get the power spectrum"); 
+    return(); 
+  } 
+  fc <- t(apply(encodedSignal,1,fft))
+  ps <- t(apply(fc,1,PS)); 
+  return(colMeans(ps))
+}
+
+
 tstForMultiGenomes <- function(numStrings = 100, avLength, deviation){
   genomeStrings <- list(numStrings); 
   lengths <- round(rnorm(numStrings,avLength,deviation)); 
   for (i in 1:numStrings){
-    genomeStrings[i] <- paste(sample(c('A','C','G','T'),numStrings,replace=T),sep='',collapse='')
+    genomeStrings[i] <- paste(sample(c('A','C','G','T'),lengths[i],replace=T),sep='',collapse='')
   }
+  getPowerSpectraSingle(encodeGenomes(genomeStrings)[[1]])
   return(encodeGenomes(genomeStrings));
 }
+
+tstForMultiGenomes(avLength=300,deviation=5);
