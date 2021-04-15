@@ -1,0 +1,39 @@
+---
+title: "YinGenomicDFTDistances"
+author: "Micah A. Thornton"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette 
+vignette: >
+  %\VignetteIndexEntry{YinGenomicDFTDistances}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+YinGenomicDFTDistances is an R-package with the express purpose of compiling and
+allowing for the analysis of the periodic components of genomic sequences similar
+to those that are discussed in the Yin and Yau papers of 2014 and 2015. This 
+package will allow you to: 
+
+- Encode a single genomic signal using the 2D (Yin 2015) or 4D (Yin 2014) encoding
+- Encode an ensemble of genomic signals using the optimal 2D encoding method 
+- Determine the optimal 2D encoding method for an ensemble of genomic signals 
+
+## Encoding genomic strings 
+
+The package itself expects genomic strings to be in the standard FASTA format 
+in terms of the nucleotides that are displayed.  However when handeling ensembles 
+of strings, the primary data structure expected is a list of character strings. 
+When handeling a single genomic signal a single character string is expected. 
+The software in the package includes functions that will allow for the automated 
+encoding of a single string, or an ensemble of strings, as well as making a 
+determination of the 
+
+### Example
+
