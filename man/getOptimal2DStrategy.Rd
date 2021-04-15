@@ -22,5 +22,5 @@ provide the best balance among all the possible encodings.
 }
 \examples{
 getOptimal2DStrategy(list('ACCCTTAACCAAGGAGGGAGAGTTTCCCCGGGGGAGG',
-                           'CCCCCCACACAAACCCTTGGGGAAAACCCGGAAGGCCCCCC'))
+                           'CCCCCCACACAAACCCTTGGGGAAAACCCGGAAGGCCCCCC'));
 }

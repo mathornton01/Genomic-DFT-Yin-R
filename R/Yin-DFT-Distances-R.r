@@ -80,9 +80,10 @@ encodeGenome <- function(stringGenome,dimension='4D',strategy="AC"){
 #' @param stringGenomes A list of strings representing genomic signals 
 #' @return A character vector containing the name of the optimal strategy, either
 #' 'AC' or 'AG'. 
-#' @examples 
+#' @examples
 #' getOptimal2DStrategy(list('ACCCTTAACCAAGGAGGGAGAGTTTCCCCGGGGGAGG',
-#'                            'CCCCCCACACAAACCCTTGGGGAAAACCCGGAAGGCCCCCC'))
+#'                            'CCCCCCACACAAACCCTTGGGGAAAACCCGGAAGGCCCCCC'));
+#' @export
 getOptimal2DStrategy <- function(stringGenomes){
   total <- 0; 
   AC <- 0; 
@@ -98,16 +99,28 @@ getOptimal2DStrategy <- function(stringGenomes){
   else {return('AG')}
 } 
 
+#' Encode an ensemble of genomes into a numerical form
+#' 
+#' Will produce a list of either the 4D or the 2D representation of a set of 
+#' signals and return them in a list. 
+#' @param stringGenomes is a list containing the genomes in a string format 
+#' @param dimension is a character string either '2D' or '4D'.
+#' @return A list containing matrixes of various column length, but either 2 or 
+#' 4 rows. 
+#' @examples
+#' encodeGenomes(list('ACCCCAATTAGAGGGACTTTGGGAACCGGAGAT','GGCCCAGAGGGAAACCGGT'),
+#'               '2D'); 
+#' encodeGenomes(list('ACCCCAATTAGAGGGACTTTGGGAACCGGAGAT','GGCCCAGAGGGAAACCGGT'), 
+#'               '4D'); 
+#' @export
 encodeGenomes <- function(stringGenomes,dimension='2D') {
   if (dimension=='2D'){
   strat <- getOptimal2DStrategy(stringGenomes);
   }
   encodedSignals <- list();
-  index <- 1; 
-  for (stringGenome in stringGenomes){
-    encodedSignals[index] <- encodeGenome(stringGenome,dimension,strat)
-    index <- index+1;
-  }
+  return(lapply(stringGenomes, function(x){
+    return(encodeGenome(x,dimension,strat));
+  }))
 }
 
 tstForMultiGenomes <- function(numStrings = 100, avLength, deviation){
@@ -118,10 +131,3 @@ tstForMultiGenomes <- function(numStrings = 100, avLength, deviation){
   }
   return(encodeGenomes(genomeStrings));
 }
-
-main <- function() {
-  res_genomes <- tstForMultiGenomes(1397,30000,30);
-  print(res_genomes);
-}
-
-main();
