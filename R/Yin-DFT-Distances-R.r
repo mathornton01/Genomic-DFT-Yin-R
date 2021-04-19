@@ -286,4 +286,4 @@ tstForMultiGenomes <- function(numStrings = 100, avLength, deviation){
   print(dmat); 
 }
 
-tstForMultiGenomes(avLength=300,deviation=5);
+#tstForMultiGenomes(avLength=300,deviation=5);
