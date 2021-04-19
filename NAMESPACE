@@ -2,5 +2,8 @@
 
 export(encodeGenome)
 export(encodeGenomes)
+export(evenlyScaleSingle)
 export(getOptimal2DStrategy)
+export(getPowerSpectraDistances)
+export(getPowerSpectraEnsemble)
 export(getPowerSpectraSingle)

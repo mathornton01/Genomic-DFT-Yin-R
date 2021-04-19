@@ -26,8 +26,7 @@ a matrix of values that has a number of rows equal to 2 or 4.
 \examples{
 MTHFR100 <- "TGGCCAGGTATAGTGGCTCATACCTGTAATCCCAGCACTCTGGGAGACCGAAGCAGTATCACCTGAGGTCAGGAGTTCGAGACCAGCCTGGCCAACATG"; 
 encMTHFR100 <- encodeGenome(MTHFR100); 
-psMTHFR100 <- PowerSpectraSingle(encMTHFR100); 
+psMTHFR100 <- getPowerSpectraSingle(encMTHFR100); 
 plot(psMTHFR100, type='l',xlab='Frequency/Sequency',
-     ylab='Power Spectral Density', main="Power Spectrum of First 100 
-                                          nucleotides of MTHFR"); 
+     ylab='Power Spectral Density', main="Power Spectrum of First 100 nucleotides of MTHFR"); 
 }

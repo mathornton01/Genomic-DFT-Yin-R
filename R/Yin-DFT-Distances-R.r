@@ -47,24 +47,24 @@ encodeGenome <- function(stringGenome,dimension='4D',strategy="AC"){
     Glocs <- as.vector(gregexpr('G',toupper(stringGenome))[[1]]); 
     Tlocs <- as.vector(gregexpr('T',toupper(stringGenome))[[1]]); 
     if (strategy == "AC"){
-      encodedSignal[1,Alocs] <- 0; 
+      #encodedSignal[1,Alocs] <- 0; 
       encodedSignal[2,Alocs] <- -1;
-      encodedSignal[1,Clocs] <- 0; 
+      #encodedSignal[1,Clocs] <- 0; 
       encodedSignal[2,Clocs] <- 1; 
       encodedSignal[1,Glocs] <- 1; 
-      encodedSignal[2,Glocs] <- 0; 
+      #encodedSignal[2,Glocs] <- 0; 
       encodedSignal[1,Tlocs] <- -1; 
-      encodedSignal[2,Tlocs] <- 0; 
+      #encodedSignal[2,Tlocs] <- 0; 
     }
     if (strategy == "AG"){
-      encodedSignal[1,Alocs] <- 0; 
+      #encodedSignal[1,Alocs] <- 0; 
       encodedSignal[2,Alocs] <- -1;
       encodedSignal[1,Clocs] <- 1; 
-      encodedSignal[2,Clocs] <- 0; 
-      encodedSignal[1,Glocs] <- 0; 
+      #encodedSignal[2,Clocs] <- 0; 
+      #encodedSignal[1,Glocs] <- 0; 
       encodedSignal[2,Glocs] <- 1; 
       encodedSignal[1,Tlocs] <- -1; 
-      encodedSignal[2,Tlocs] <- 0; 
+      #encodedSignal[2,Tlocs] <- 0; 
     }
     return(encodedSignal)
   }
@@ -139,10 +139,9 @@ encodeGenomes <- function(stringGenomes,dimension='2D') {
 #' @examples 
 #' MTHFR100 <- "TGGCCAGGTATAGTGGCTCATACCTGTAATCCCAGCACTCTGGGAGACCGAAGCAGTATCACCTGAGGTCAGGAGTTCGAGACCAGCCTGGCCAACATG"; 
 #' encMTHFR100 <- encodeGenome(MTHFR100); 
-#' psMTHFR100 <- PowerSpectraSingle(encMTHFR100); 
+#' psMTHFR100 <- getPowerSpectraSingle(encMTHFR100); 
 #' plot(psMTHFR100, type='l',xlab='Frequency/Sequency',
-#'      ylab='Power Spectral Density', main="Power Spectrum of First 100 
-#'                                           nucleotides of MTHFR"); 
+#'      ylab='Power Spectral Density', main="Power Spectrum of First 100 nucleotides of MTHFR"); 
 #' @export
 getPowerSpectraSingle <- function(encodedSignal){
   PS <- function(x) {return(abs(x)^2)}
@@ -155,6 +154,127 @@ getPowerSpectraSingle <- function(encodedSignal){
   return(colMeans(ps))
 }
 
+#' Get the Fourier Power Spectra for an ensemble of encoded genomic signals 
+#' 
+#' This is a wrapper for the getPowerSpectraSingle function, that allows for 
+#' the direct return of power spectra for each of the signals in an ensemble. 
+#' @param encodedEnsemble a list of encoded genomes that are produced using 
+#' one of the encoding methods programmed in this package. 
+#' @return A list of Power spectra for the corresponding genomic sequences. 
+#' @examples 
+#' genStrings1 <- list('ACCAAGGATATTAGGACCC','CCCCAGGGAGATTTAGG','CCCGGGAGAGATTTAG'); 
+#' encStrings1 <- encodeGenomes(genStrings1); 
+#' psStrings1 <- getPowerSpectraEnsemble(encStrings1); 
+#' @export
+getPowerSpectraEnsemble <- function(encodedEnsemble){
+  return(lapply(encodedEnsemble,getPowerSpectraSingle));
+}
+
+#' Evenly Scale Signals from their initial size of 'n' to size 'm'. 
+#' 
+#' This function will scale a power spectrum from an initial size of n to a 
+#' size m.  Note that the new signal size m must be larger than the original 
+#' signal size n, but cannot be too large (larger than twich the original size).
+#' 
+#' @param genomicPS The Power Spectrum of the genetic sequence that is being 
+#' scaled, in general this could be any arbitrary real sequence, however in 
+#' keeping with the spirit of the packages overall usability, this function is 
+#' defined in terms that relate to the genomic nature of the data used. 
+#' @param scaleTo The length to which it is desired to scale the original 
+#' spectrum.  This is the same as the value m in the original paper by Yin et 
+#' al. (2015). 
+#' 
+#' @return The scaled power spectrum, which is composed of the original sequence
+#' of length n, and is scaled to the new size of m or 'scaleTo'. 
+#' @examples 
+#' tg <- "ACCAGGAGATTAGAGCCCCAGAGTAGAGCCCCAGAGATTAGAGCCAGAGTGAGAGCCGANNNAGAGC"; 
+#' pstg <- getPowerSpectraSingle(encodeGenome(tg,'2D')); 
+#' scaled <- evenlyScaleSingle(pstg,80); 
+#' @export
+evenlyScaleSingle <- function(genomicPS, scaleTo){
+  n <- length(genomicPS); 
+  m <- scaleTo; 
+  if (m <= n){
+    print(paste("Cannot scale sequence (or does not make sense to) 
+                of size ", n, " to size ", m)); 
+  }
+  if (m >= 2*n){
+    print("Scaling sequence to more than two times it's original size will 
+          highly dilute the initial characteristics of the sequence.");
+  }
+  Tm <- numeric(m); 
+  Tn <- genomicPS; 
+  Tm[1] <- Tn[1]; 
+  for (k in 2:m){
+    Q <- k*n/m; 
+    R <- floor(Q); 
+    if (R == 0){
+      R <- 1;
+    }
+    if (Q-R == 0){
+      Tm[k] <- Tn[Q]; 
+    }
+    else {
+      Tm[k] <- Tn[R] + (Q-R)*(Tn[R+1]-Tn[R]);
+    }
+  }
+  return(Tm);
+}
+
+#'  Evenly scale an ensemble of spectra such that their
+#'
+#'  This function will take an ensemble of genomic power spectra, and scale them
+#'  all such that they are of a length equivalent to the maximum length of a 
+#'  sequence in the ensemble. 
+#'  @param spectraList A list containing the power spectra of genomic signals 
+#'  for sequences of interest. 
+#'  @return A list of scaled spectra all of which should be the same length. 
+#'  @examples 
+#'  tg <- c("ACCCAAGAGAGAGCCCCCGAGAGAGAGAGAGAGAGCCCCGAGAGAGCGAGACGAGAC","TAGAGCCGAGATAGAGCCGAGAGTTAGAC","CGGAGAGNNGGAGAGCCCGAGAGTTTGAGNN")
+#'  eg <- encodeGenomes(tg); 
+#'  ps <- getPowerSpectraEnsemble(eg); 
+#'  sps <- evenlyScaleEnsemble(ps);
+#'  @export
+evenlyScaleEnsemble <- function(spectraList){
+  spectraLengths <- lapply(spectraList,length); 
+  maxLength <- max(unlist(spectraLengths));
+  maxIndex <- which(unlist(lapply(spectraList,length)) == max(unlist(lapply(spectraList,length))));
+  scaledSpectra <- list(length(spectraList)); 
+  scaledSpectra[[maxIndex]] <- spectraList[[maxIndex]];
+  for (i in 1:length(spectraList)){
+    if (i == maxIndex){
+      next;
+    }
+    scaledSpectra[[i]] <- evenlyScaleSingle(spectraList[[i]], maxLength); 
+  }
+  return(scaledSpectra); 
+}
+
+#' Get the Power Spectra Distance
+#' 
+#' Computes the Euclidean distances among all of the sequences for all of the 
+#' power spectra, applying a standard Euclidean distance measure to the entire 
+#' computed spectrum.  The result is returned as a standard pairwise distances 
+#' matrix. 
+#' @param genomeList Genetic strings expected in a list. 
+#' @return pair-wise distances matrix computed as the euclidean distance among 
+#' the various power spectra for the sequences provided. 
+#' @examples 
+#' tg <- c("ACCCAAGAGAGAGCCCCCGAGAGAGAGAGAGAGAGCCCCGAGAGAGCGAGACGAGAC","TAGAGCCGAGATAGAGCCGAGAGTTAGAC","CGGAGAGNNGGAGAGCCCGAGAGTTTGAGNN")
+#' dm <- getPowerSpectraDistances(tg); 
+#' @export
+getPowerSpectraDistances <- function(genomeList){
+  eg <- encodeGenomes(genomeList);
+  ps <- getPowerSpectraEnsemble(eg); 
+  sps <- evenlyScaleEnsemble(ps); 
+  dmat <- matrix(0,length(sps),length(sps)); 
+  for (i in 1:length(sps)){
+    for (j in i:length(sps)){
+      dmat[i,j] <- sqrt(sum((sps[[i]]-sps[[j]])^2))
+    }
+  }
+  return(dmat + t(dmat)); 
+}
 
 tstForMultiGenomes <- function(numStrings = 100, avLength, deviation){
   genomeStrings <- list(numStrings); 
@@ -162,8 +282,8 @@ tstForMultiGenomes <- function(numStrings = 100, avLength, deviation){
   for (i in 1:numStrings){
     genomeStrings[i] <- paste(sample(c('A','C','G','T'),lengths[i],replace=T),sep='',collapse='')
   }
-  getPowerSpectraSingle(encodeGenomes(genomeStrings)[[1]])
-  return(encodeGenomes(genomeStrings));
+  dmat <- getPowerSpectraDistances(genomeStrings);
+  print(dmat); 
 }
 
 tstForMultiGenomes(avLength=300,deviation=5);
