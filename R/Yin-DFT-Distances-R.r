@@ -276,6 +276,116 @@ getPowerSpectraDistances <- function(genomeList){
   return(dmat + t(dmat)); 
 }
 
+#' Get the Kmer Counts for certainty nucleotides (ie remove ambiguous mers)
+#' 
+#' Produces a vector of the counts of all of the kmers in a particular character
+#' string representing a genetic sequence.  This implementation will first replace all 
+#' non-ACGT components with a gapping place holder (-) and will then proceed to 
+#' count all mers present which do not contain any gaps. 
+#' @param genomicString A genomic string in the character string format in R 
+#' @param k The size of the kmers which the user would like to produce a count matrix for
+#' @param freq Return the relative proportions of kmers of that kind (default FALSE - return raw counts)
+#' @return A vector of kmer counts that contains counts for the kmers in lexicographical 
+#' ordering. 
+#' @examples 
+#' countKmersCertain(sarscvmay[1,]$sequences,5)
+#' @export 
+countKmersCertain <- function(genomicString,k,freq=FALSE){
+  kcounts <- numeric(4^k); 
+  gappedString <- gsub("[^ACGT]","-",toupper(genomicString))
+  for (i in 1:(nchar(gappedString)-(k))){
+    curmer <- substring(gappedString,i,i+k-1);
+    if (grepl("-",curmer,fixed=TRUE)){
+      next;
+    } else {
+      idxConv <- gsub("A","0",curmer);
+      idxConv <- gsub("C","1",idxConv);
+      idxConv <- gsub("G","2",idxConv); 
+      idxConv <- gsub("T","3",idxConv); 
+      meridx <- strtoi(idxConv,4); 
+      kcounts[meridx+1] <- kcounts[meridx+1]+1; 
+    }
+  }
+  if (freq){return(kcounts/sum(kcounts));}
+  return(kcounts);
+}
+
+#' Compute Vector of counts for first five kinds of kmers 
+#' 
+#' Generates a vector of counts (or frequencies) for the first five k-mers (ie. 
+#' 1-mers, 2-mers, ..., 5-mers) and returns the vector concatenated together. 
+#' @param genomicString The character string version of the genomic signal which 
+#' the user wishes to produce the kmer vector for. 
+#' @param freq Whether the user would like a vector of raw counts back or if 
+#' a vector of relative frequencies. 
+#' @return a 1364 length vector containing counts/frequencies for first five mers
+#' @examples 
+#' countMersCertainFirstFive(sarscvmay[1,]$sequences,FALSE)
+#' @export
+countMersCertainFirstFive <- function(genomicString,freq=FALSE){
+  merCount <- c();
+  for (i in 1:5){
+    merCount <- c(merCount,countKmersCertain(genomicString,i,freq));
+  }
+  return(merCount); 
+}
+
+#' Count the first five mers for an ensemble of strings
+#' 
+#' Generates a matrix of size 1364 by number of samples, that will contain 
+#' counts/frequencies for the first five k-mers for an ensemble of genomic signals. 
+#' @param genomicStrings A list of character strings representing the genomic signals 
+#' of interest. 
+#' @param freq Whether the user would like a vector of raw counts back or if 
+#' a vector of relative frequencies. 
+#' @return a 1364 by number of sequences matrix containing the first five mer counts 
+#' for all of the sequences in "genomicStrings". 
+#' @examples 
+#' countFFMersEnsemble(sarscvmay[1:5,]$sequences);
+#' @export
+countFFMersEnsemble <- function(genomicStrings,freq=FALSE){
+  return(matrix(unlist(lapply(genomicStrings,function(x){countMersCertainFirstFive(x,freq)})),
+    ncol=length(genomicStrings), byrow=TRUE));
+}
+
+#' Filter Highest Variance Components of Power Spectra for Ensemble
+#' 
+#' This function will generate a filter for an ensemble of strings that when 
+#' multiplied by the power spectra for a sample will push all components with 
+#' variance (across the ensemble) below the first 'numCoeffs' to zero. 
+#' @param scaledPowerSpectraEnsemble a list containing the scaled power spectra for 
+#' an ensemble of strings such as that returned by the function evenlyScaleEnsemble.
+#' @param numCoeffs The number of coefficients that the user wishes to use for the 
+#' distance calculation, this pushes all others to zero. 
+#' @return a vector of the same length as the input scaled signal length which 
+#' contains ones in the positions where coefficients have a high across ensemble 
+#' variance, and zero for those below the desired number of ooefficients. 
+#' @examples 
+#' en <- encodeGenomes(sarscvmay[1:5,]); 
+#' ps <- getPowerSpectraEnsemble(en); 
+#' sps <- evenlyScaleEnsemble(ps); 
+#' fil <- getMaximalVarianceFilter(sps,100); 
+#' @export
+getMaximalVarianceFilter <- function(scaledPowerSpectraEnsemble,numCoeffs){
+  spsmat <- matrix(unlist(scaledPowerSpectraEnsemble), nrow=length(scaledPowerSpectraEnsemble),
+                   byrow=FALSE)
+  coeffs <- order(colVars(spsmat),decreasing=TRUE)[1:numCoeffs]; 
+  filt <- numeric(length(scaledPowerSpectraEnsemble[[1]])); 
+  filt[coeffs] <- 1; 
+  return(filt); 
+}
+
+
+#'  Test Fourier Power spectra computation with random sequences 
+#'  
+#'  A function for performing a test of the procedures in this package with randomly
+#'  generated genetic strings. 
+#'  @param numStrings the number of genomic signals to generate 
+#'  @param avLength the average length of the genomic signals (generated according to Normal Distribution)
+#'  @param deviation the variance of the normal distribution with which to compute the vector of lengths. 
+#'  @examples 
+#'  tstForMultiGenomes(100,30000,30)
+#'  @export
 tstForMultiGenomes <- function(numStrings = 100, avLength, deviation){
   genomeStrings <- list(numStrings); 
   lengths <- round(rnorm(numStrings,avLength,deviation)); 
