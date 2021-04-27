@@ -1,0 +1,108 @@
+---
+title: "Distance Metrics Comparison for Genomic Sequences"
+author: "Micah Thornton"
+date: "4/22/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Genomic Distances 
+
+This is an R-Markdown document intended to apply several classification and clustering procedures 
+that are discussed in the "Examining Uses of the DFT-Distance Metric in SARS-CoV-2 Genomes" paper 
+by me (Micah Thornton) and Dr. Monnie McGee.  Firstly, there is an R-Package hosted on a git repository 
+that contains a few key features along with the primary data set from the GISAID Initiative.
+The block immediately to follow need not be run every time, but could be without damaging any dependencies. 
+
+### Required Packages 
+This script will examine a few classical distance measures as well as the Fourier Transform distance, and the 
+k-mer frequency vector distances.  The Fourier Transform distance produces a power spectra for each of the signals 
+and the k-mer method produces a vector of k-mer counts or frequencies.  Distances are then computed (in both cases) 
+by inspecting the Euclidean distance between the vectors or spectra.  Other measures such as the classical 
+Jukes-Cantor distance (1969) require that the data be aligned.  Hence we can call the k-mer and the Fourier Transform 
+distance 'alignment-free' algorithms, whereas the Jukes-Cantor distance is an example of an algorithm that requires 
+sequence alignment.  As such, in order to construct Jukes-Cantor distances the data must be aligned.  In the 
+case of the dataset 'sarscvmay' the sequences are not pre-aligned, and therefore would require full multiple sequence 
+alignment prior to the computation of the distances.  There are 1,322 total SARS-CoV-2 genomes in the 'sarscvmay' 
+dataset, meaning that a full multiple sequence alignment would take substantial time.  As such, sequence alignment is 
+considered for 100 subsamples of 10 sequences, and the distance metrics for these ten are compared by inspecting 
+the correlation prodcued.  For the k-mer and Fourier Transform distance measures where an intermediary summary vector 
+is produced, several classification and clustering approaches are examined to determine the utility of these 
+intermediary vectors as numerical summaries for the sequences from which characteristics of interest (particularly 
+geographic region of submission in this case) may be learned. 
+
+```{r library-installs}
+# Install the Yin Genomic Package if not currently installed. 
+YinInstalled <- "YinGenomicDFTDistances" %in% installed.packages(); 
+apeInstalled <- "ape" %in% installed.packages(); 
+devtoolsInstalled <- "devtools" %in% installed.packages(); 
+
+if (!YinInstalled){
+  if (!devtoolsInstalled){
+    install.packages("devtools");
+  }
+  library(devtools); 
+  install_github("mathornton01/Genomic-DFT-Yin-R");
+}
+if (!apeInstalled){
+  install.packages("ape");
+}
+library(YinGenomicDFTDistances);
+library(ape);
+```
+
+## Timing Analysis
+
+As previously mentioned, the actual time to compute the full multiple sequence alignment for all 1,322 of the 
+SARS-CoV-2 genomes contained within the 'sarscvmay' dataset in the Yin-DFT R-Package would take a considerable 
+amount of time, because the operations generally increase exponentially with the number of sequences being aligned. 
+Therefore, in order to estimate the speed up provided by these alignment free methods over the alignment method, 
+multiple different subsamples of 8 sequences from the original set will be aligned using the multiple-alignment tool
+clustalw2.  In order to use the wrapper function for the aligner in 'ape' you will need to download the executable 
+file for clustalw2 and place this in your system path.  You may download the clustalw2 binary files for the Windows 
+OS and Mac OSX here: http://www.clustal.org/download/current/. 
+
+```{r timings}
+M <- 100; # Number of times to re-run the sampling procedure 
+n <- 8; # Number of sequences to sample 
+
+alignTimes <- numeric(M);
+PScompTimes <- matrix(0,nrow=M,ncol=3); 
+merCountTimes <- numeric(M); 
+
+for (i in 1:M){
+  sam <- sample(1:nrow(sarscvmay),n)
+  dnabinseqs <- as.DNAbin(strsplit(sarscvmay[sam,]$sequences,'')) # Convert to 'Ape' special format DNAbin 
+  tsalign <- Sys.time();
+  alignsam <- clustal(dnabinseqs);
+  tealign <- Sys.time();
+  alignt <- tealign-tsalign; 
+  alignTimes[i] <- alignt; 
+  tsPScompEnc <- Sys.time(); 
+  enGenomes <- encodeGenomes(sarscvmay[sam,]$sequences);
+  tePScompEnc <- Sys.time();
+  PScompEncTime <- tePScompEnc - tsPScompEnc; 
+  tsPScompPS <- Sys.time(); 
+  PS <- getPowerSpectraEnsemble(enGenomes); 
+  tePScompPS <- Sys.time();
+  PScompPSTime <- tePScompPS-tsPScompPS; 
+  tsPScompES <- Sys.time(); 
+  esPS <- evenlyScaleEnsemble(PS);
+  tePScompES <- Sys.time(); 
+  PScompESTime <- tePScompES-tsPScompES; 
+  
+  
+}
+
+```
+
+## Classification with Alignment-Free Intermediary Vectors
+
+For this section of the analysis, the intermediary vectors for the Fourier Distance 
+and the k-mer frequencies are examined to determine whether similar classification 
+accuracy on the general geographic region of interest for the data can be achieved 
+using either of the two methods.  
+
