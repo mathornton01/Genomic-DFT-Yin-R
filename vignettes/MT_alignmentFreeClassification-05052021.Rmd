@@ -1,0 +1,41 @@
+---
+title: "Alignment-Free-Classification"
+author: "Micah Thornton"
+date: "5/5/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Alignment Free Distances
+
+When comparing genetic or proteomic sequence among one pair or more of organisms
+it becomes necessary in most cases to align the sequences to one another such 
+that there is some consistency in the symbols being compared.  This procedure 
+usually known as multiple sequence alignment (MSA) is generally an expensive 
+operation computationally and requires quite some time to complete.  In this 
+study we will examine nearly 1,400 viromes (1,322) of the *SARS-CoV-2* genome that were 
+downloaded in May 2020 from the GISAID Initiative (an initiative which curates 
+and maintains not only viromes from *SARS-CoV-2*, but also other pathogenic 
+viruses such as *Influenza*). The YinGenomicDFTDistances package provides the 
+dataset that will be investigated as a collection of headers and the associated
+*FASTA* formatted sequences with which that header is associated. 
+
+```{r loadingData}
+library(YinGenomicDFTDistances); 
+viralData <- YinGenomicDFTDistances::sarscvmay;
+str(viralData)
+```
+
+# Parsing the Headers 
+As we can see, the data contained in the header field of the packaged dataset 
+is not in a usable format, but may be parsed using regular expressions to 
+produce a set of valid submitting laboratory locations.  This parsing may be 
+executed in a variety of different ways, but here we use string pattern matching
+with regular expressions. 
+
+```{r parseHeaders}
+locations <- unlist(lapply(strsplit(viralData$headers,"/"), function(x){x[2]}));
+```
