@@ -1,5 +1,5 @@
-filename = "gisaid_hcov-19_2020_05_18_18.fasta"
-ofilename = "unaligned.csv"
+filename = "gisaid_hcov-19_2020_08_20_02.fasta"
+ofilename = "gisaid_hcov-19_2020_08_20_02_unaligned.csv"
 headers = []
 sequences = [] 
 newseq = False

@@ -3,7 +3,7 @@
 \docType{data}
 \name{sarscvmayaligned}
 \alias{sarscvmayaligned}
-\title{Aligned GISAID sequence data for 1,322 SARS-CoV-2 Genomes from May 18, 2019}
+\title{Aligned GISAID sequence data for 1,322 SARS-CoV-2 Genomes from May 18, 2020}
 \format{
 A dataframe with 1,322 rows and 2 columns: 
 \describe{
@@ -21,7 +21,7 @@ sarscvmayaligned
 A dataset containing the the header and sequence information for 1,322 
 different international sequence captures for the Single-Stranded Pluse-Sense
 RNA virus called the SARS-Coronavirus 2 which is responsible for the outbreak
-of the Covid19 Pandemic situation which began at the end of 2018. This set has 
+of the Covid19 Pandemic situation which began at the end of 2019. This set has 
 been aligned using the Clustal-Omega Software.
 }
 \keyword{datasets}

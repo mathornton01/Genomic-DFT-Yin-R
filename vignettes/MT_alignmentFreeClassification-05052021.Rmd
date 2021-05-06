@@ -37,5 +37,49 @@ executed in a variety of different ways, but here we use string pattern matching
 with regular expressions. 
 
 ```{r parseHeaders}
-locations <- unlist(lapply(strsplit(viralData$headers,"/"), function(x){x[2]}));
+viralData$Location <- unlist(lapply(strsplit(as.character(viralData$Header),"/"), function(x){x[2]}));
+for (inc in c('tiger','env')){
+  viralData[viralData$Location == inc, ]$Location <- unlist(lapply(strsplit(as.character(viralData[viralData$Location == inc,]$Header),"/"), function(x){x[3]}))
+}
+viralData$Region <- rep("blank",nrow(viralData)); 
+if (nrow(viralData[viralData$Location %in% c("Algeria", "Egypt", "South Africa",  "DRC",  "Gambia", "Senegal"),]) > 0){
+viralData[viralData$Location %in% c("Algeria", "Egypt", "South Africa",  "DRC",  "Gambia", "Senegal"),]$Region <- "Africa"
+}
+if (nrow(viralData[viralData$Location %in% c("Beijing" ,"Chongqing" ,"Fujian" ,"Guangdong" ,"Hangzhou" , "Hong Kong" ,"Jiangsu" ,"Jiangxi" ,"Jingzhou" ,"Shandong" ,"Shenzhen" , "Sichuan" , "Taiwan", "Tianmen" ,"Wuhan", "Yunnan" , "Zhejiang" ,"Lishui"  ,"Japan"  ,"Guangzhou"),]) > 0){
+viralData[viralData$Location %in% c("Beijing" ,"Chongqing" ,"Fujian" ,"Guangdong" ,"Hangzhou" , "Hong Kong" ,"Jiangsu" ,"Jiangxi" ,"Jingzhou" ,"Shandong" ,"Shenzhen" , "Sichuan" , "Taiwan", "Tianmen" ,"Wuhan", "Yunnan" , "Zhejiang" ,"Lishui"  ,"Japan"  ,"Guangzhou"),]$Region <- "East Asia"
+}
+if (nrow(viralData[viralData$Location %in% c( "Brazil" ,"Chile" ,"Colombia" ,"Costa Rica" ,"Uruguay"),]) > 0){
+viralData[viralData$Location %in% c( "Brazil" ,"Chile" ,"Colombia" ,"Costa Rica" ,"Uruguay"),]$Region <- "South America"
+}
+if (nrow(viralData[viralData$Location %in% c("Austria", "Belgium", "Czech Republic", "Denmark", "Finland", "France" , "Georgia", "Germany" , "Greece" , "Spain", "Sweden" , "Hungary" , "Portugal" , "Poland", "Russia", "Romania" , "Slovakia" , "Italy"),]) > 0){
+viralData[viralData$Location %in% c("Austria", "Belgium", "Czech Republic", "Denmark", "Finland", "France" , "Georgia", "Germany" , "Greece" , "Spain", "Sweden" , "Hungary" , "Portugal" , "Poland", "Russia", "Romania" , "Slovakia" , "Italy"),]$Region <- "Europe"
+}
+if (nrow(viralData[viralData$Location %in% c( "Bangladesh" , "Cambodia" , "India" , "Nepal" , "Sri Lanka" , "Vietnam" , "Thailand"),]) > 0){
+viralData[viralData$Location %in% c( "Bangladesh" , "Cambodia" , "India" , "Nepal" , "Sri Lanka" , "Vietnam" , "Thailand"),]$Region <- "West Asia"
+}
+if (nrow(viralData[viralData$Location %in% c( "Australia", "New Zealand" , "Indonesia" , "Malaysia"),]) > 0){
+viralData[viralData$Location %in% c( "Australia", "New Zealand" , "Indonesia" , "Malaysia"),]$Region <- "Oceania"
+}
+if (nrow(viralData[viralData$Location %in% c("Turkey" , "Saudi Arabia" , "Kazakhstan" ,"Iran", "Israel" , "Kuwait"),]) > 0){
+viralData[viralData$Location %in% c("Turkey" , "Saudi Arabia" , "Kazakhstan" ,"Iran", "Israel" , "Kuwait"),]$Region <- "Middle East"
+}
+if (nrow(viralData[viralData$Location %in% c("USA", "Puerto Rico", "Guam", "Mexico"),]) > 0){
+viralData[viralData$Location %in% c("USA", "Puerto Rico", "Guam", "Mexico"),]$Region <- "North America"
+}
+if (nrow(viralData[viralData$Location %in% c("blank"),]) > 0){
+viralData[viralData$Location %in% c("blank"),]$Region <- viralData[viralData$Location %in% c("blank"),]$Location
+}
+table(viralData$Region)
 ```
+# Computing the Alignment-Free Distance metrics with YinDFTDistances Package 
+
+The YinGenomicDFTDistances Package provides two alignment-free methods for 
+determining the distance between different sequences of the same type.  The 
+reason why these are known as 'alignment-free' methods is simply because they 
+do not require the sequences to be aligned to one another using a Multiple 
+Sequence Alignment (MSA) tool such as clustalW or Clustal Omega prior to the 
+computation of the metric.  The two such methods provided by the package are 
+(I) the First-Five K-mer Frequency Distance, and (II) The DFT spectra distances. 
+
+The 
+## The First-Five K-mer Frequency Distance 
