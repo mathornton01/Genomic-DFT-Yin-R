@@ -5,7 +5,7 @@
 \alias{sarscvaug}
 \title{GISAID sequence data for 1,397 SARS-CoV-2 Genomes from August 20, 2020}
 \format{
-A dataframe with 1,322 rows and 2 columns: 
+A dataframe with 1,397 rows and 2 columns: 
 \describe{
  \item{Sequence}{The full sequence information in character form for the data}
  \item{Header}{The full header string extracted from the FASTA provided by GISAID}
