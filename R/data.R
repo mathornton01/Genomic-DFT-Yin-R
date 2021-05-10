@@ -31,7 +31,7 @@
 "sarscvmayaligned"
 
 
-#' GISAID sequence data for 1,322 SARS-CoV-2 Genomes from August 20, 2020
+#' GISAID sequence data for 1,397 SARS-CoV-2 Genomes from August 20, 2020
 #' 
 #' A dataset containing the the header and sequence information for 1,322 
 #' different international sequence captures for the Single-Stranded Pluse-Sense

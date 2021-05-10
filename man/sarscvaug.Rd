@@ -3,7 +3,7 @@
 \docType{data}
 \name{sarscvaug}
 \alias{sarscvaug}
-\title{GISAID sequence data for 1,322 SARS-CoV-2 Genomes from August 20, 2020}
+\title{GISAID sequence data for 1,397 SARS-CoV-2 Genomes from August 20, 2020}
 \format{
 A dataframe with 1,322 rows and 2 columns: 
 \describe{

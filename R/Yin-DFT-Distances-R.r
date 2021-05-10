@@ -375,6 +375,24 @@ getMaximalVarianceFilter <- function(scaledPowerSpectraEnsemble,numCoeffs){
   return(filt); 
 }
 
+#'   A Statistical Test based on the varianceGamma Distribution for the 
+#'   difference in Power spectra
+#'
+#'
+#'
+testOfPSDiff <- function(PS1,PS2){
+  
+}
+
+#'   A Statistical Test based on the F Distribution for the ratio of two Power 
+#'   Spectra
+#'
+#'
+#'
+testOfPSRatio <- function(PS1,PS2){
+  
+}
+
 
 #'  Test Fourier Power spectra computation with random sequences 
 #'  

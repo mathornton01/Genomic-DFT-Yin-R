@@ -25,7 +25,7 @@ dataset that will be investigated as a collection of headers and the associated
 
 ```{r loadingData}
 library(YinGenomicDFTDistances); 
-viralData <- YinGenomicDFTDistances::sarscvmay;
+viralData <- YinGenomicDFTDistances::sarscvaug;
 str(viralData)
 ```
 
@@ -81,5 +81,184 @@ Sequence Alignment (MSA) tool such as clustalW or Clustal Omega prior to the
 computation of the metric.  The two such methods provided by the package are 
 (I) the First-Five K-mer Frequency Distance, and (II) The DFT spectra distances. 
 
-The 
+The First-Five K-mer Frequency Distance simply computes the frequency of 
+the K-mers in the sample of the first kind (for k as one to five), once the 
+frequencies for all of the k-mers are counted, they may serve as an intermediary
+numerical vector that summarizes some of the information content in the original
+genomic signal.  Due to the fact that these numerical summaries are produced 
+for each of the sequences of interest in the k-mer method, they may be used as 
+potential vectors on which to classify the location, or potentially even other 
+aspects related to the sequences.  In order to compute distances, the standard 
+Euclidean distance, or other metrics can be used. 
+
+The second metric, known as the DFT Power Spectra distance will first compute 
+the DFT of each of the sequences using the methods discussed in Yin 2014, and 
+2015.  The magnitudes of the produced Fourier Series (that is series of 
+Fourier Coefficients for each sequence) are squared, and the power spectra for 
+each of the genomic signals is taken.  Due to the fact that the length of 
+each of the genomic signals in a particular sample will likely not be uniform, 
+an even scaling procedure is applied to the resultant spectra such that all of 
+the spectra are scaled to the same length, and hence comparable.  Again, here 
+a numerical summary (the scaled power spectra) for each of the sequences are 
+produced as an intermediary along the route to the distance calculations and 
+again might be used as potential factors on which to classify the sequences 
+submitting geographic region or other possible values of interest. 
+
+Here we investigate the capabilities of these two numerical summary vectors to 
+accurately predict the overall geographic region of submission for the 
+SARS-CoV-2 sequences that are captured and maintained by the GISAID initiative, 
+and extended in the 'sarscvaug' data set which is constituent of the 
+YinGenomicDFTDistances package for R. 
+
 ## The First-Five K-mer Frequency Distance 
+
+```{r fifimers}
+countMerTimes <- Sys.time(); 
+countFFMersEnsemble(sarscvaug$Sequence,TRUE) -> sarscvaugmers;
+#load("sarscvaugmers.RData");
+countMerTimef <- Sys.time(); 
+countMerTimeT <- countMerTimef-countMerTimes;
+```
+
+The first five k-mers (that is the 1-mers, 2-mers, 3-mers, 4-mers, and 5-mers) 
+are counted for each of the sequences, and the resultant 1364 sequences are 
+stored in a matrix (approximately 15.2 MB) containing a total of 1364 rows, and 
+1397 columns, where each column represents a sequence, and each row represents 
+a kind of mer, the function provided in the package for counting these first 
+five mers uses the generic call for counting arbitrary length mers, encoded 
+in the same, and therefore could be sped up by applying a sub-counting method 
+where only the five mers are counted, and then the counts of the other mers are
+infered from those counts.  The function also provides the user the option to 
+compute the frequency or the count, the frequency matrix is the same as the 
+count matrix except that each column will have been scaled by the total counts. 
+
+These intermediary vectors allow for the opportunity to represent each of the 
+sequences numerically, and therefore different techniques from high-dimensional
+visualization, and machine learning (in terms of clustering) may be applied to 
+the vectors to examine the sequences visually.  We would like to note that for 
+the counts of the first five-mers the numerical summary is destructive, and the 
+original sequences may not be recoverable from the k-mer matrix.  This is also 
+the case with the Fourier transform numerical summaries as we shall see. 
+
+First some visualization techniques are applied to the K-mer counts vector to 
+examine if the different regions are distinct when representing sequences in 
+terms of their k-mer frequencies. 
+
+```{R mervis}
+library(tsne);
+library(ggplot2); 
+library(umap);
+
+set.seed(0xFADE)
+
+tsne(scale(scam)) -> tsnemers; 
+princomp(scale(scam)) -> pcamers; 
+umap(scale(scam)) -> umapmers; 
+
+mertsnedf <- data.frame(TSNE1 = tsnemers[,1], TSNE2 = tsnemers[,2],region = viralData$Region);
+merpcadf <- data.frame(PCA1 = pcamers$scores[,1], PCA2 = pcamers$scores[,2], region = viralData$Region); 
+merumapdf <- data.frame(UMAP1 = umapmers$layout[,1], UMAP2 = umapmers$layout[,2], region = viralData$Region); 
+
+ggplot(mertsnedf, aes(TSNE1,TSNE2))+geom_point( aes(color=region)) + ggtitle("TSNE constructed from First Five K-mer Frequency Vector Distances")
+
+ggplot(merpcadf, aes(PCA1,PCA2)) + geom_point(aes(color=region)) + ggtitle("Prinicipal Components Biplot for First Five K-mer Frequency vectors")
+
+ggplot(merumapdf, aes(UMAP1,UMAP2)) + geom_point(aes(color=region)) + ggtitle("Prinicipal Components Biplot for First Five K-mer Frequency vectors")
+
+```
+
+From the visualization techniques above, we can see that there are somewhat 
+distinct regions formed by the scaled kmer frequency vectors.
+
+```{r fivemerviz}
+set.seed(0xFADE)
+
+tsne(scale(scam[,340:1364])) -> tsnemers; 
+princomp(scale(scam[,340:1364])) -> pcamers; 
+umap(scale(scam[,340:1364])) -> umapmers; 
+
+mertsnedf <- data.frame(TSNE1 = tsnemers[,1], TSNE2 = tsnemers[,2],region = viralData$Region);
+merpcadf <- data.frame(PCA1 = pcamers$scores[,1], PCA2 = pcamers$scores[,2], region = viralData$Region); 
+merumapdf <- data.frame(UMAP1 = umapmers$layout[,1], UMAP2 = umapmers$layout[,2], region = viralData$Region); 
+
+ggplot(mertsnedf, aes(TSNE1,TSNE2))+geom_point( aes(color=region)) + ggtitle("TSNE constructed from First Five K-mer Frequency Vector Distances")
+
+ggplot(merpcadf, aes(PCA1,PCA2)) + geom_point(aes(color=region)) + ggtitle("Prinicipal Components Biplot for First Five K-mer Frequency vectors")
+
+ggplot(merumapdf, aes(UMAP1,UMAP2)) + geom_point(aes(color=region)) + ggtitle("Prinicipal Components Biplot for First Five K-mer Frequency vectors")
+```
+
+## Classification with K-Mer Frequency Vector
+ 
+```{r kmerclass}
+library(e1071); # Naive Bayes Classifier and Support Vector Machines
+library(rpart); # Decision Trees CART
+library(class); # For the Knn Classifier Model
+library(randomForest); # For the Random Forest Model 
+library(neuralnet); # For the Neural Network Classifier
+
+
+set.seed(0xBEEF)
+group <- rep(1:5,nrow(viralData))
+group <- sample(group[1:nrow(viralData)])
+
+nb_confmat <- matrix(0,nrow=length(unique(viralData$Region)), ncol=length(unique(viralData$Region)))
+cart_confmat <- matrix(0,nrow=length(unique(viralData$Region)), ncol=length(unique(viralData$Region)))
+knn_confmat <- matrix(0,nrow=length(unique(viralData$Region)), ncol=length(unique(viralData$Region)))
+rf_confmat <- matrix(0,nrow=length(unique(viralData$Region)), ncol=length(unique(viralData$Region)))
+nn_confmat <- matrix(0,nrow=length(unique(viralData$Region)),ncol=length(unique(viralData$Region)))
+svm_confmat <- matrix(0,nrow=length(unique(viralData$Region)),ncol=length(unique(viralData$Region)))
+
+for (ho in 1:5){
+  X_train <- scale(scam[group != ho,]);
+  Y_train <- viralData$Region[group != ho];
+  
+  X_test <- scale(scam[group == ho,]); 
+  Y_test <- viralData$Region[group == ho]
+  
+  nb_model <- naiveBayes(X_train,Y_train); 
+  cart_model <- rpart(label~.,data=data.frame(X_train,label=Y_train));
+  rf_model <- randomForest(factor(label,levels=c("West Asia","East Asia","Europe","Africa","North America","South America","Oceania","Middle East"))~.,data=data.frame(X_train,label=Y_train),importance=TRUE,proximity=TRUE);
+  nn_model <- neuralnet(factor(label,levels=c("West Asia","East Asia","Europe","Africa","North America","South America","Oceania","Middle East"))~.,data=data.frame(X_train,label=Y_train), hidden=c(30), linear.output=FALSE, threshold=0.01)
+  svm_model <- svm(factor(label,levels=c("West Asia","East Asia","Europe","Africa","North America","South America","Oceania","Middle East"))~.,data=data.frame(X_train,label=Y_train))
+  
+  predict(nb_model,X_test) -> Y_pred_nb; 
+  unique(Y_test)[apply(predict(cart_model,data.frame(X_test)),1,function(x){which.max(x)})] -> Y_pred_cart;
+  predict(rf_model,newdata=data.frame(X_test)) -> Y_pred_rf;
+  c("West Asia","East Asia","Europe","Africa","North America","South America","Oceania","Middle East")[apply(predict(nn_model,newdata=data.frame(X_test)),1,which.max)] -> Y_pred_nn;
+  predict(svm_model, data.frame(X_test)) -> Y_pred_svm; 
+  
+  nb_confmat <- nb_confmat+table(factor(Y_pred_nb,levels=c("West Asia","East Asia","Europe","Africa","North America","South America","Oceania","Middle East")),factor(Y_test,levels=c("West Asia","East Asia","Europe","Africa","North America","South America","Oceania","Middle East")))
+  cart_confmat <- cart_confmat+table(factor(Y_pred_cart,levels=c("West Asia","East Asia","Europe","Africa","North America","South America","Oceania","Middle East")),factor(Y_test,levels=c("West Asia","East Asia","Europe","Africa","North America","South America","Oceania","Middle East")))
+  knn_confmat <- knn_confmat+table(factor(knn(X_train,X_test,Y_train),levels=c("West Asia","East Asia","Europe","Africa","North America","South America","Oceania","Middle East")),factor(Y_test,levels=c("West Asia","East Asia","Europe","Africa","North America","South America","Oceania","Middle East")))
+  rf_confmat <- rf_confmat+table(factor(Y_pred_rf,levels=c("West Asia","East Asia","Europe","Africa","North America","South America","Oceania","Middle East")),factor(Y_test,levels=c("West Asia","East Asia","Europe","Africa","North America","South America","Oceania","Middle East")))
+  nn_confmat <- nn_confmat+table(factor(Y_pred_nn,levels=c("West Asia","East Asia","Europe","Africa","North America","South America","Oceania","Middle East")),factor(Y_test,levels=c("West Asia","East Asia","Europe","Africa","North America","South America","Oceania","Middle East")))
+  svm_confmat <- svm_confmat+table(factor(Y_pred_svm,levels=c("West Asia","East Asia","Europe","Africa","North America","South America","Oceania","Middle East")),factor(Y_test,levels=c("West Asia","East Asia","Europe","Africa","North America","South America","Oceania","Middle East")))
+  
+}
+
+
+nbmeracc <- sum(diag(nb_confmat))/sum(nb_confmat)
+cartmeracc <- sum(diag(cart_confmat))/sum(cart_confmat)
+knnmeracc <- sum(diag(knn_confmat))/sum(knn_confmat)
+rfmeracc <- sum(diag(rf_confmat))/sum(rf_confmat)
+nnmeracc <- sum(diag(nn_confmat))/sum(nn_confmat)
+svmmeracc <- sum(diag(svm_confmat))/sum(svm_confmat)
+
+```
+
+## The Fourier Power Spectra
+
+```{r computePowerSpectra}
+encTimeStart <- Sys.time(); 
+sarscvaugenc <- YinGenomicDFTDistances::encodeGenomes(YinGenomicDFTDistances::sarscvaug$Sequence);
+encTimeStop <- Sys.time(); 
+sarscvaugps <- YinGenomicDFTDistances::getPowerSpectraEnsemble(sarscvaugenc);
+pscompTimeStop <- Sys.time(); 
+sarscvaugscaledps <- evenlyScaleEnsemble(sarscvaugps);
+evScaleTimeStop <- Sys.time(); 
+matrix(unlist(sarscvaugscaledps),ncol=length(sarscvaugscaledps[[1]]), byrow=TRUE) -> scaps;
+scale(scaps) -> scaps;
+tsne(scaps) -> tsneps
+```
+
