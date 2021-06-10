@@ -381,7 +381,10 @@ getMaximalVarianceFilter <- function(scaledPowerSpectraEnsemble,numCoeffs){
 #'
 #'
 testOfPSDiff <- function(PS1,PS2){
+  maxips1 <- max(PS1); 
+  maxips2 <- max(PS2); 
   
+  qchisq(maxips1/maxips2)
 }
 
 #'   A Statistical Test based on the F Distribution for the ratio of two Power 
