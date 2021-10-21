@@ -170,6 +170,54 @@ getPowerSpectraEnsemble <- function(encodedEnsemble){
   return(lapply(encodedEnsemble,getPowerSpectraSingle));
 }
 
+
+#' Get the Fourier Phase Spectrum for a single encoded Genomic Signal 
+#' 
+#' This function produces the phase spectrum of the Fourier transform for a 
+#' single genomic signal that has been encoded using either the 2D or 4D 
+#' representation, the function will produce an error if it is not supplied with
+#' a matrix of values that has a number of rows equal to 2 or 4. (AM)
+#' @param encodedSignal is a genomic signal of interest, for which the average 
+#' power spectrum will be computed and returned to the user, you may encode 
+#' your genomic character strings by using the encodeGenomes or encodeGenome 
+#' function in this package. 
+#' @return A vector of values indicating the average phase spectral density 
+#' (according to the Fourier Transform) for the encoded genomes four, or two 
+#' constituent signals. 
+#' @examples 
+#' MTHFR100 <- "TGGCCAGGTATAGTGGCTCATACCTGTAATCCCAGCACTCTGGGAGACCGAAGCAGTATCACCTGAGGTCAGGAGTTCGAGACCAGCCTGGCCAACATG"; 
+#' encMTHFR100 <- encodeGenome(MTHFR100); 
+#' psMTHFR100 <- getPhaseSpectraSingle(encMTHFR100); 
+#' plot(psMTHFR100, type='l',xlab='Frequency/Sequency',
+#'      ylab='Phase Spectral Density', main="Phase Spectrum of First 100 nucleotides of MTHFR"); 
+#' @export
+getPhaseSpectraSingle <- function(encodedSignal){
+  PS <- function(x) {return(atan(Im(x)/Re(x)))}
+  if (!nrow(encodedSignal) %in% c(2,4)){
+    print("Please encode genomic string prior to attempting to get the power spectrum"); 
+    return(); 
+  } 
+  fc <- t(apply(encodedSignal,1,fft))
+  ps <- t(apply(fc,1,PS)); 
+  return(colMeans(ps))
+}
+
+#' Get the Fourier Phase Spectra for an ensemble of encoded genomic signals 
+#' 
+#' This is a wrapper for the getPhaseSpectraSingle function, that allows for 
+#' the direct return of phase spectra for each of the signals in an ensemble. 
+#' @param encodedEnsemble a list of encoded genomes that are produced using 
+#' one of the encoding methods programmed in this package. 
+#' @return A list of Phase spectra for the corresponding genomic sequences. 
+#' @examples 
+#' genStrings1 <- list('ACCAAGGATATTAGGACCC','CCCCAGGGAGATTTAGG','CCCGGGAGAGATTTAG'); 
+#' encStrings1 <- encodeGenomes(genStrings1); 
+#' psStrings1 <- getPhaseSpectraEnsemble(encStrings1); 
+#' @export
+getPhaseSpectraEnsemble <- function(encodedEnsemble){
+  return(lapply(encodedEnsemble,getPhaseSpectraSingle));
+}
+
 #' Evenly Scale Signals from their initial size of 'n' to size 'm'. 
 #' 
 #' This function will scale a power spectrum from an initial size of n to a 
@@ -364,12 +412,12 @@ countFFMersEnsemble <- function(genomicStrings,freq=FALSE){
 #' en <- encodeGenomes(sarscvmay[1:5,]); 
 #' ps <- getPowerSpectraEnsemble(en); 
 #' sps <- evenlyScaleEnsemble(ps); 
-#' fil <- getMaximalVarianceFilter(sps,100); 
+#' fil <- getMinimalVarianceFilter(sps,100); 
 #' @export
-getMaximalVarianceFilter <- function(scaledPowerSpectraEnsemble,numCoeffs){
+getMinimalVarianceFilter <- function(scaledPowerSpectraEnsemble,numCoeffs){
   spsmat <- matrix(unlist(scaledPowerSpectraEnsemble), nrow=length(scaledPowerSpectraEnsemble),
                    byrow=FALSE)
-  coeffs <- order(colVars(spsmat),decreasing=TRUE)[1:numCoeffs]; 
+  coeffs <- order(apply(spsmat,2,var),decreasing=TRUE)[1:numCoeffs]; 
   filt <- numeric(length(scaledPowerSpectraEnsemble[[1]])); 
   filt[coeffs] <- 1; 
   return(filt); 
